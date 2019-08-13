@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="data1.js"></script>
+    <style>
+        #table-wrapper table {
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #table-wrapper th,td {
+            border: 1px solid black;
+            width: 70px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="select">
+        <fieldset id="region-select"></fieldset>
+        <fieldset id="product-select"></fieldset>
+    </div>
+    <div id="table-wrapper"></div>
+    
+    <script>
+        var regionDom = document.querySelector('#region-select');
+        var productDom = document.querySelector('#product-select');
+        var selectDiv = document.querySelector('#select');
+        var tableDom = document.querySelector('#table-wrapper');
+        var product = [],
+            region = [];
+        
+        var regionData = {
+            1: '华东',
+            2: '华北',
+            3: '华南',
+        };
+        var productData = {
+            1: '手机',
+            2: '笔记本',
+            3: '智能音箱',
+        };
+        // 表单
+        function addform(box, name, checkboxData) {
+            // 全选按钮
+            var checkboxAll = document.createElement('input');
+            checkboxAll.type = 'checkbox';
+            checkboxAll.name = name;
+            checkboxAll.value = 'all';
+            checkboxAll.className = 'all';
+            var text = document.createTextNode('全选'+' ');
+            box.appendChild(checkboxAll);
+            box.appendChild(text);
+            // 其它按钮
+            for(var propName in checkboxData) {
+                var checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = name;
+                checkbox.value = propName;
+                checkbox.className = 'subitem'; //注意这个地方要是className
+                if(propName == 1) {
+                    checkbox.checked = true;
+                }
+                var text = document.createTextNode(checkboxData[propName]+' ');
+                box.appendChild(checkbox);
+                box.appendChild(text);
+            }
+            var eleAll = box.children;
+            getData(eleAll, name, checkboxData);
+            tableRender(dataProcess());
+            // 事件
+            box.addEventListener('click', function(e) {
+                if(e.target.nodeName.toLowerCase() == 'input') {
+                    var cn = e.target.className;
+                    if(cn == 'all') {
+                        if(e.target.checked) {
+                            for(var i in eleAll) {
+                                eleAll[i].checked = true;
+                            }
+                        }
+                    } else {
+                        var flag = false;
+                        for(var i=0; i<eleAll.length; i++) { //注意这里只能用for循环
+                            if(eleAll[i].checked) {
+                                flag = true;
+                                break;
+                            }
+                        }
+                        if(!flag) {
+                            e.target.checked = true;
+                        } 
+                        box.firstElementChild.checked = true;
+                        for(var i=1; i<eleAll.length; i++) {
+                            if(!eleAll[i].checked) {
+                                box.firstElementChild.checked = false;
+                                break;
+                            }
+                        }
+                    }
+                    getData(eleAll, name, checkboxData);
+                    tableRender(dataProcess());
+                }
+            }, false);
+        }
+        // 获取数据
+        function getData(eleAll, name, checkboxData) {
+            var arr = [];
+            for(var i=1; i<eleAll.length; i++) {
+                if(eleAll[i].checked) {
+                    arr.push(checkboxData[i]);
+                }
+            }
+            if(name == 'product') {
+                product = arr;
+            } else if(name == 'region') {
+                region = arr;
+            }
+        }
+
+        addform(regionDom, 'region', regionData);
+        addform(productDom, 'product', productData);
+        
+        // 数据处理
+        function dataProcess() {
+            var data = [];
+            for(var i in sourceData) {
+                if(product.indexOf(sourceData[i].product) > -1 && region.indexOf(sourceData[i].region) > -1) {
+                    data.push(sourceData[i]);
+                }
+            }
+            console.log(data);
+            return data;
+        }
+        
+        // 渲染表格
+        function tableRender(data) {
+            tableDom.innerHTML = '';
+            var table = document.createElement('table');
+            // 表头
+            var tr = document.createElement('tr');
+            if(region.length==1) {
+                createT(tr, 'th', '地区');
+                createT(tr, 'th', '商品');
+            } else {
+                createT(tr, 'th', '商品');
+                createT(tr, 'th', '地区');
+            }
+            for(var i=0;i<12;i++) {
+                createT(tr, 'th', i+1+'月');
+            }
+            table.appendChild(tr);
+            // 表格
+            var flag = 0;
+            for(var i in data) {
+                var tr = document.createElement('tr');
+                // 控制rowSpan
+                if(region.length==1 && product.length>region.length) {
+                    if(flag%product.length==0) {
+                        createT(tr, 'td', data[i].region, product.length);
+                    }
+                    createT(tr,'td',data[i].product);
+                } else {
+                    if(flag%region.length==0) {
+                        createT(tr, 'td', data[i].product, region.length);
+                    }
+                    createT(tr, 'td', data[i].region);
+                }
+                // sale
+                for(var j in data[i].sale) {
+                    var td = document.createElement('td');
+                    td.innerText = data[i].sale[j];
+                    tr.appendChild(td);
+                }
+                table.appendChild(tr);
+                flag++;
+            }
+            tableDom.appendChild(table);
+        }
+        // create td/th
+        function createT(tr, tType, text, rows) {
+            var t = document.createElement(tType);
+            t.innerText = text;
+            if(rows) {
+                t.rowSpan = rows;
+            }
+            tr.appendChild(t);
+        }
+    </script>
+</body>
+</html>
